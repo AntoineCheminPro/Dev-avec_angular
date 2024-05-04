@@ -1,4 +1,4 @@
-import { Component, CUSTOM_ELEMENTS_SCHEMA, OnInit } from '@angular/core';
+import { Component, OnInit, CUSTOM_ELEMENTS_SCHEMA, HostListener } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { OlympicService } from 'src/app/core/services/olympic.service';
 import { map } from 'rxjs/operators';
@@ -8,8 +8,8 @@ import { Color, NgxChartsModule, ScaleType } from '@swimlane/ngx-charts';
 @Component({
   selector: 'app-home',
   standalone: true,
-  templateUrl: './home.component.html',
   imports: [NgxChartsModule],
+  templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss'],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
@@ -19,27 +19,34 @@ export class HomeComponent implements OnInit {
       return data
         ? data.map((country: OlympicCountry) => ({
           name: country.country,
-          value: country.participations.length,
+          value: country.participations.reduce(
+            (total, participation) => total + participation.medalsCount,
+            0
+          ),
         }))
         : [];
     })
   );
 
   view: [number, number] = [700, 400];
-  showXAxis = true;
-  showYAxis = true;
-  gradient = false;
   showLegend = true;
-  showXAxisLabel = true;
-  xAxisLabel = 'Country';
-  showYAxisLabel = true;
-  yAxisLabel = 'Number of Medals';
+  showLabels = true;
+  legendPosition: string = 'below';  // Placer la légende en dessous par défaut
   colorScheme: Color = {
     name: 'myScheme',
     selectable: true,
     group: ScaleType.Ordinal,
-    domain: ['#5AA454', '#A10A28', '#C7B42C', '#AAAAAA']
-  }; constructor(private olympicService: OlympicService) { }
+    domain: [
+      '#5AA454', '#A10A28', '#C7B42C', '#AAAAAA', 
+      '#1F77B4', '#FF7F0E', '#2CA02C', '#D62728', 
+      '#9467BD', '#8C564B', '#E377C2', '#7F7F7F', 
+      '#BCBD22', '#17BECF'
+    ]
+  };
+
+  constructor(private olympicService: OlympicService) {
+    this.setView();
+  }
 
   ngOnInit(): void {
     this.olympicService.loadInitialData().subscribe();
@@ -47,5 +54,17 @@ export class HomeComponent implements OnInit {
 
   onSelect(event: any): void {
     console.log(event);
+  }
+
+  @HostListener('window:resize', ['$event'])
+  onResize(event: any): void {
+    this.setView();
+  }
+
+  setView(): void {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    this.view = [Math.min(width * 0.9, 600), Math.min(height * 0.7, 600)]; // Ajuster la hauteur pour une meilleure adaptation sur smartphone
+    this.legendPosition = width < 600 ? 'below' : 'right';
   }
 }
