@@ -1,19 +1,21 @@
 import { Component, OnInit, CUSTOM_ELEMENTS_SCHEMA, HostListener } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { OlympicService } from 'src/app/core/services/olympic.service';
 import { map } from 'rxjs/operators';
 import { OlympicCountry } from 'src/app/core/models/Olympic';
 import { Color, NgxChartsModule, ScaleType } from '@swimlane/ngx-charts';
 
 @Component({
-  selector: 'app-home',
+  selector: 'app-detail',
   standalone: true,
   imports: [NgxChartsModule],
-  templateUrl: './home.component.html',
-  styleUrls: ['./home.component.scss'],
+  templateUrl: './detail.component.html',
+  styleUrl: './detail.component.scss',
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
+
 })
-export class HomeComponent implements OnInit {
+export class DetailComponent implements OnInit {
+
   public olympics$: Observable<any> = this.olympicService.getOlympics().pipe(
     map((data) => {
       return data
@@ -31,7 +33,7 @@ export class HomeComponent implements OnInit {
   view: [number, number] = [700, 400];
   showLegend = true;
   showLabels = true;
-  legendPosition: string = 'below';  
+  legendPosition: string = 'below';
   colorScheme: Color = {
     name: 'myScheme',
     selectable: true,
