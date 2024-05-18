@@ -5,6 +5,7 @@ import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { ActivatedRoute } from '@angular/router';
 import { OlympicCountry } from 'src/app/core/models/Olympic';
 import { Color, NgxChartsModule, ScaleType } from '@swimlane/ngx-charts';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-detail',
@@ -23,7 +24,8 @@ export class DetailComponent implements OnInit {
 
   constructor(
     private olympicService: OlympicService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private router: Router
   ) {
     this.setView();
   }
@@ -76,6 +78,11 @@ export class DetailComponent implements OnInit {
     });
   }
 
+  formatXAxisTick(year: number): string {
+    // Afficher l'étiquette seulement si l'année est un multiple de 4
+    return year % 4 === 0 ? year.toString() : '';
+  }
+
   onSelect(event: any): void {
     console.log(event);
   }
@@ -90,5 +97,9 @@ export class DetailComponent implements OnInit {
     const height = window.innerHeight;
     this.view = [Math.min(width * 0.9, 600), Math.min(height * 0.7, 600)];
     this.legendPosition = width < 600 ? 'below' : 'right';
+  }
+
+  back(): void {
+    this.router.navigate(['/']);
   }
 }

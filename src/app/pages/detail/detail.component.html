@@ -6,7 +6,13 @@
       [legend]="showLegend"
       [xAxis]="true"
       [yAxis]="true"
-      [autoScale]="true"
+      [autoScale]="false"
+      [xAxisTickFormatting]="formatXAxisTick.bind(this)"
       (select)="onSelect($event)">
     </ngx-charts-line-chart>
+    <h2 class="title">{{ (country$ | async)?.[0]?.name }}</h2>
   </div>
+  <div class="container">
+    <button (click)="back()">Retour</button>
+  </div>
+
