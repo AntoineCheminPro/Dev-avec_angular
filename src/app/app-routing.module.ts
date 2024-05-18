@@ -3,6 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { HomeComponent } from './pages/home/home.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { DetailComponent } from './pages/detail/detail.component';
+import { ErrorPageComponent } from './pages/error-page/error-page.component';
 
 const routes: Routes = [
   {
@@ -13,7 +14,10 @@ const routes: Routes = [
     path: 'detail/:id',
     component: DetailComponent,
   },
-
+  {
+    path: 'error',
+    component: ErrorPageComponent,
+  },
   {
     path: '**', // wildcard
     component: NotFoundComponent,

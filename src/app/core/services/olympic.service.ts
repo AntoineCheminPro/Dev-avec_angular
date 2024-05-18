@@ -49,13 +49,26 @@ export class OlympicService {
   }
 
   getOlympicCountry(id: string): Observable<OlympicCountry | null> {
+
     return this.getOlympics().pipe(
+
       filter(olympics => olympics !== null && olympics !== undefined),
+
       map((olympics: OlympicCountry[]) => {
+
         const foundCountry = olympics.find((c: OlympicCountry) => c.id === +id);
-        return foundCountry ? foundCountry : null;
+
+        if (!foundCountry) {
+
+          throw new Error('404 Not Found');
+
+        }
+
+        return foundCountry;
+
       })
+
     );
+
   }
 }
-

@@ -1,16 +1,16 @@
 import { Component, OnInit, CUSTOM_ELEMENTS_SCHEMA, HostListener } from '@angular/core';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { OlympicService } from 'src/app/core/services/olympic.service';
-import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
-import { ActivatedRoute } from '@angular/router';
+import { catchError, map, switchMap } from 'rxjs/operators';
+import { ActivatedRoute, Router } from '@angular/router';
 import { OlympicCountry } from 'src/app/core/models/Olympic';
 import { Color, NgxChartsModule, ScaleType } from '@swimlane/ngx-charts';
-import { Router } from '@angular/router';
+import { ButtonComponent } from 'src/app/components/button/button.component';
 
 @Component({
   selector: 'app-detail',
   standalone: true,
-  imports: [NgxChartsModule],
+  imports: [NgxChartsModule, ButtonComponent],
   templateUrl: './detail.component.html',
   styleUrl: './detail.component.scss',
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
@@ -48,26 +48,27 @@ export class DetailComponent implements OnInit {
 
   ngOnInit() {
     this.country$ = this.route.params.pipe(
-      map(params => params['id']),
-      switchMap(id => this.olympicService.getOlympicCountry(id)),
+      map(params => params['id']), // Extrait l'ID du pays à partir des paramètres de la route
+      switchMap(id => this.olympicService.getOlympicCountry(id)), // Utilise l'ID pour obtenir les données du pays via le service olympique
       map(country => {
-        return [{
+        return [{ // Transforme les données du pays en format adapté pour l'affichage
           name: country!.country,
           series: country!.participations.map(participation => ({
-            name: participation.year,
-            value: participation.medalsCount
+            name: participation.year, // Année de participation
+            value: participation.medalsCount // Nombre de médailles obtenues
           }))
         }];
       }),
       catchError(error => {
-        console.error("Erreur lors de la récupération des données du pays:", error);
-        return of([]);
+        if (error.message === '404 Not Found') {
+          this.router.navigate(['/error']);
+        }
+        return of([]); // Retourne un tableau vide en cas d'erreur
       })
     );
   }
 
   loadCountryData(id: string) {
-    console.log('Chargement des données du pays avec l\'ID:', id);
     this.olympicService.getOlympicCountry(id).subscribe((country: OlympicCountry | null) => {
       if (country !== null) {
         this.country = country;
@@ -97,9 +98,5 @@ export class DetailComponent implements OnInit {
     const height = window.innerHeight;
     this.view = [Math.min(width * 0.9, 600), Math.min(height * 0.7, 600)];
     this.legendPosition = width < 600 ? 'below' : 'right';
-  }
-
-  back(): void {
-    this.router.navigate(['/']);
   }
 }
