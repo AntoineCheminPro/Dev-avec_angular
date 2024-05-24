@@ -5,6 +5,7 @@ import { map } from 'rxjs/operators';
 import { OlympicCountry } from 'src/app/core/models/Olympic';
 import { Color, NgxChartsModule, ScaleType } from '@swimlane/ngx-charts';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-home',
@@ -15,12 +16,12 @@ import { Router } from '@angular/router';
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class HomeComponent implements OnInit {
+  private subscription: Subscription = new Subscription();
 
   public olympics$: Observable<any> = this.olympicService.getOlympics().pipe(
     map((data) => {
       return data
         ? data.map((country: OlympicCountry) => {
-          console.log('pays', country);
           return {
             id: country.id,
             name: country.country,
@@ -57,9 +58,10 @@ export class HomeComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.olympicService.loadInitialData().subscribe();
+    this.subscription.add(
+      this.olympicService.loadInitialData().subscribe()
+    );
   }
-
   onSelect(event: any): void {
     console.log('event', event);
     const id = event.extra.id;
@@ -79,5 +81,9 @@ export class HomeComponent implements OnInit {
     const height = window.innerHeight;
     this.view = [Math.min(width * 0.9, 600), Math.min(height * 0.7, 600)]; // Ajuster la hauteur pour une meilleure adaptation sur smartphone
     this.legendPosition = width < 600 ? 'below' : 'right';
+  }
+
+  ngOnDestroy(): void {
+    this.subscription.unsubscribe();
   }
 }

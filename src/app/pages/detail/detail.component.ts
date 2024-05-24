@@ -1,5 +1,5 @@
 import { Component, OnInit, CUSTOM_ELEMENTS_SCHEMA, HostListener } from '@angular/core';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable, of, Subscription } from 'rxjs';
 import { OlympicService } from 'src/app/core/services/olympic.service';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -21,6 +21,7 @@ export class DetailComponent implements OnInit {
   public olympics$: BehaviorSubject<OlympicCountry[]> = new BehaviorSubject<OlympicCountry[]>([]);
   public loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   public country$: Observable<{ name: string; series: { value: number; name: number; }[] }[] | []> = new BehaviorSubject([]);
+  private subscription: Subscription = new Subscription();
 
   constructor(
     private olympicService: OlympicService,
@@ -47,27 +48,34 @@ export class DetailComponent implements OnInit {
   };
 
   ngOnInit() {
-    this.country$ = this.route.params.pipe(
-      map(params => params['id']), // Extrait l'ID du pays à partir des paramètres de la route
-      switchMap(id => this.olympicService.getOlympicCountry(id)), // Utilise l'ID pour obtenir les données du pays via le service olympique
-      map(country => {
-        return [{ // Transforme les données du pays en format adapté pour l'affichage
-          name: country!.country,
-          series: country!.participations.map(participation => ({
-            name: participation.year, // Année de participation
-            value: participation.medalsCount // Nombre de médailles obtenues
-          }))
-        }];
-      }),
-      catchError(error => {
-        if (error.message === '404 Not Found') {
-          this.router.navigate(['/error']);
-        }
-        return of([]); // Retourne un tableau vide en cas d'erreur
+    this.subscription.add(
+      this.route.params.pipe(
+        map(params => params['id']), // Extrait l'ID du pays à partir des paramètres de la route
+        switchMap(id => this.olympicService.getOlympicCountry(id)), // Utilise l'ID pour obtenir les données du pays via le service olympique
+        map(country => {
+          return [{ // Transforme les données du pays en format adapté pour l'affichage
+            name: country!.country,
+            series: country!.participations.map(participation => ({
+              name: participation.year, // Année de participation
+              value: participation.medalsCount // Nombre de médailles obtenues
+            }))
+          }];
+        }),
+        catchError(error => {
+          if (error.message === '404 Not Found') {
+            this.router.navigate(['/error']);
+          }
+          return of([]); // Retourne un tableau vide en cas d'erreur
+        })
+      ).subscribe(data => {
+        this.country$ = of(data);
       })
     );
   }
 
+  ngOnDestroy() {
+    this.subscription.unsubscribe();
+  }
   loadCountryData(id: string) {
     this.olympicService.getOlympicCountry(id).subscribe((country: OlympicCountry | null) => {
       if (country !== null) {
