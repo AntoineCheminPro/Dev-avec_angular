@@ -6,6 +6,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { OlympicCountry } from 'src/app/core/models/Olympic';
 import { Color, NgxChartsModule, ScaleType } from '@swimlane/ngx-charts';
 import { ButtonComponent } from 'src/app/components/button/button.component';
+import { CountryData } from 'src/app/core/models/CountryData';
 
 @Component({
   selector: 'app-detail',
@@ -18,7 +19,11 @@ import { ButtonComponent } from 'src/app/components/button/button.component';
 export class DetailComponent implements OnInit {
 
   public id: string = '';
-  public country$: BehaviorSubject<{ name: string; series: { value: number; name: number; }[] }[]> = new BehaviorSubject<{ name: string; series: { value: number; name: number; }[] }[]>([]); public loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  // BehaviorSubject pour les données du pays
+  public country$: BehaviorSubject<CountryData[]> = new BehaviorSubject<CountryData[]>([]);
+  // BehaviorSubject pour le chargement
+  public loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  // BehaviorSubject pour les erreurs
   private subscription: Subscription = new Subscription();
   public error$: BehaviorSubject<string | null> = new BehaviorSubject<string | null>(null);
 
@@ -30,6 +35,7 @@ export class DetailComponent implements OnInit {
     this.setView();
   }
 
+  //Graph settings
   public view: [number, number] = [700, 400];
   public showLegend = false;
   public showLabels = true;
@@ -64,7 +70,9 @@ export class DetailComponent implements OnInit {
     this.loading$.next(true);
     this.error$.next(null);
 
+    // Récupérer les données du pays
     this.olympicService.getOlympicCountry(id).subscribe({
+      // Gérer les données
       next: (country: OlympicCountry | null) => {
         if (country !== null) {
           const transformedData = [{
@@ -75,19 +83,21 @@ export class DetailComponent implements OnInit {
             }))
           }];
           this.country$.next(transformedData);
+        
         } else {
           console.error("Aucun pays trouvé avec l'ID spécifié.");
           this.error$.next("Aucun pays trouvé avec l'ID spécifié.");
         }
         this.loading$.next(false);
       },
+      // Gérer les erreurs
       error: (error) => {
         console.error("Erreur lors de la récupération des données du pays:", error);
         this.error$.next("Une erreur est survenue lors de la récupération des données.");
         this.loading$.next(false);
       },
       complete: () => {
-        // Optionnel : vous pouvez ajouter une logique ici si nécessaire
+        this.loading$.next(false);
       }
     });
 

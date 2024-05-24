@@ -6,7 +6,7 @@ import { OlympicCountry } from 'src/app/core/models/Olympic';
 import { Color, NgxChartsModule, ScaleType } from '@swimlane/ngx-charts';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
-
+import { OlympicEvent } from 'src/app/core/models/OlympicEvent';
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -17,14 +17,17 @@ import { Subscription } from 'rxjs';
 })
 
 export class HomeComponent implements OnInit {
+
   private subscription: Subscription = new Subscription();
   private loadingSubject = new BehaviorSubject<boolean>(true);
   private errorSubject = new BehaviorSubject<string | null>(null);
-
   public loading$ = this.loadingSubject.asObservable();
   public error$ = this.errorSubject.asObservable();
-  public olympics$: Observable<any> | undefined;
+  public olympics$: Observable<OlympicEvent[]> | undefined;
 
+
+
+  //Graph settings
   view: [number, number] = [700, 400];
   showLegend = true;
   showLabels = true;
@@ -46,6 +49,7 @@ export class HomeComponent implements OnInit {
     this.setView();
   }
 
+  // Initialiser le composant
   ngOnInit(): void {
     this.olympics$ = this.olympicService.getOlympics().pipe(
       map((data) => {
@@ -82,8 +86,8 @@ export class HomeComponent implements OnInit {
     );
   }
 
-
-  onSelect(event: any): void {
+  // Rediriger vers la page de détail au clic sur un élément
+  onSelect(event: OlympicEvent): void {
     const id = event.extra.id;
     if (id) {
       this.router.navigate(['/detail', id]);
@@ -92,6 +96,7 @@ export class HomeComponent implements OnInit {
     }
   }
 
+  // Ajuster la vue en fonction de la taille de la fenêtre
   setView(): void {
     const width = window.innerWidth;
     const height = window.innerHeight;
@@ -99,6 +104,7 @@ export class HomeComponent implements OnInit {
     this.legendPosition = width < 600 ? 'below' : 'right';
   }
 
+  // Nettoyer les abonnements lors de la destruction du composant
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
   }

@@ -14,6 +14,7 @@ export class OlympicService {
 
   constructor(private http: HttpClient) { }
 
+  // Charger les données initiales
   loadInitialData(): Observable<any> {
     this.loading.next(true); // Début du chargement
     return this.http.get<OlympicCountry[]>(this.olympicUrl).pipe(
@@ -33,14 +34,17 @@ export class OlympicService {
     return this.loading.asObservable();
   }
 
+  // Vérifier si les données sont chargées
   isDataLoaded(): boolean {
     return this.olympics$.value !== null && this.olympics$.value !== undefined;
   }
 
+  // Récupérer les données des pays
   getOlympics(): Observable<OlympicCountry[] | null> {
     return this.olympics$.asObservable();
   }
 
+  // Récupérer les données d'un pays
   getOlympicCountry(id: string): Observable<OlympicCountry | null> {
     return this.getOlympics().pipe(
       filter((olympics): olympics is OlympicCountry[] => olympics !== null && olympics !== undefined),
