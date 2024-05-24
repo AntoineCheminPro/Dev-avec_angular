@@ -1,7 +1,7 @@
 import { Component, OnInit, CUSTOM_ELEMENTS_SCHEMA, HostListener } from '@angular/core';
-import { BehaviorSubject, Observable, of, Subscription } from 'rxjs';
+import { BehaviorSubject, Subscription } from 'rxjs';
 import { OlympicService } from 'src/app/core/services/olympic.service';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
 import { OlympicCountry } from 'src/app/core/models/Olympic';
 import { Color, NgxChartsModule, ScaleType } from '@swimlane/ngx-charts';
@@ -16,12 +16,11 @@ import { ButtonComponent } from 'src/app/components/button/button.component';
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class DetailComponent implements OnInit {
+
   public id: string = '';
-  public country: OlympicCountry = {} as OlympicCountry;
-  public olympics$: BehaviorSubject<OlympicCountry[]> = new BehaviorSubject<OlympicCountry[]>([]);
-  public loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-  public country$: Observable<{ name: string; series: { value: number; name: number; }[] }[] | []> = new BehaviorSubject([]);
+  public country$: BehaviorSubject<{ name: string; series: { value: number; name: number; }[] }[]> = new BehaviorSubject<{ name: string; series: { value: number; name: number; }[] }[]>([]); public loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   private subscription: Subscription = new Subscription();
+  public error$: BehaviorSubject<string | null> = new BehaviorSubject<string | null>(null);
 
   constructor(
     private olympicService: OlympicService,
@@ -31,11 +30,11 @@ export class DetailComponent implements OnInit {
     this.setView();
   }
 
-  view: [number, number] = [700, 400];
-  showLegend = false;
-  showLabels = true;
-  legendPosition: string = 'below';
-  colorScheme: Color = {
+  public view: [number, number] = [700, 400];
+  public showLegend = false;
+  public showLabels = true;
+  public legendPosition: string = 'below';
+  public colorScheme: Color = {
     name: 'myScheme',
     selectable: true,
     group: ScaleType.Ordinal,
@@ -47,60 +46,76 @@ export class DetailComponent implements OnInit {
     ]
   };
 
+  // Initialiser le composant
   ngOnInit() {
     this.subscription.add(
       this.route.params.pipe(
-        map(params => params['id']), // Extrait l'ID du pays à partir des paramètres de la route
-        switchMap(id => this.olympicService.getOlympicCountry(id)), // Utilise l'ID pour obtenir les données du pays via le service olympique
-        map(country => {
-          return [{ // Transforme les données du pays en format adapté pour l'affichage
-            name: country!.country,
-            series: country!.participations.map(participation => ({
-              name: participation.year, // Année de participation
-              value: participation.medalsCount // Nombre de médailles obtenues
-            }))
-          }];
-        }),
-        catchError(error => {
-          if (error.message === '404 Not Found') {
-            this.router.navigate(['/error']);
-          }
-          return of([]); // Retourne un tableau vide en cas d'erreur
+        map(params => {
+          return params['id'];
         })
-      ).subscribe(data => {
-        this.country$ = of(data);
+      ).subscribe(id => {
+        this.loadCountryData(id);
       })
     );
   }
 
-  ngOnDestroy() {
-    this.subscription.unsubscribe();
-  }
+  // Charger les données du pays
   loadCountryData(id: string) {
-    this.olympicService.getOlympicCountry(id).subscribe((country: OlympicCountry | null) => {
-      if (country !== null) {
-        this.country = country;
-        console.log(country);
-      } else {
-        console.error("Aucun pays trouvé avec l'ID spécifié.");
+    this.loading$.next(true);
+    this.error$.next(null);
+
+    this.olympicService.getOlympicCountry(id).subscribe({
+      next: (country: OlympicCountry | null) => {
+        if (country !== null) {
+          const transformedData = [{
+            name: country.country,
+            series: country.participations.map(participation => ({
+              name: participation.year,
+              value: participation.medalsCount
+            }))
+          }];
+          this.country$.next(transformedData);
+        } else {
+          console.error("Aucun pays trouvé avec l'ID spécifié.");
+          this.error$.next("Aucun pays trouvé avec l'ID spécifié.");
+        }
+        this.loading$.next(false);
+      },
+      error: (error) => {
+        console.error("Erreur lors de la récupération des données du pays:", error);
+        this.error$.next("Une erreur est survenue lors de la récupération des données.");
+        this.loading$.next(false);
+      },
+      complete: () => {
+        // Optionnel : vous pouvez ajouter une logique ici si nécessaire
       }
     });
-  }
 
-  formatXAxisTick(year: number): string {
-    // Afficher l'étiquette seulement si l'année est un multiple de 4
-    return year % 4 === 0 ? year.toString() : '';
   }
-
+  // Naviguer vers la page de détail lors de la sélection d'un élément
   onSelect(event: any): void {
     console.log(event);
   }
 
+  // Nettoyer les abonnements lors de la destruction du composant
+  ngOnDestroy() {
+    this.subscription.unsubscribe();
+  }
+
+
+  // gestion de la taille de la fenêtre
   @HostListener('window:resize', ['$event'])
   onResize(event: any): void {
     this.setView();
   }
 
+  // Définir la vue en fonction de la taille de la fenêtre
+  formatXAxisTick(year: number): string {
+    // Afficher l'étiquette seulement si l'année est un multiple de 4
+    return year % 4 === 0 ? year.toString() : '';
+  }
+
+  // Définir la vue en fonction de la taille de la fenêtre
   setView(): void {
     const width = window.innerWidth;
     const height = window.innerHeight;

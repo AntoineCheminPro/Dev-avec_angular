@@ -1,7 +1,7 @@
 import { Component, OnInit, CUSTOM_ELEMENTS_SCHEMA, HostListener } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable, of, BehaviorSubject } from 'rxjs';
 import { OlympicService } from 'src/app/core/services/olympic.service';
-import { map } from 'rxjs/operators';
+import { map, catchError, finalize } from 'rxjs/operators';
 import { OlympicCountry } from 'src/app/core/models/Olympic';
 import { Color, NgxChartsModule, ScaleType } from '@swimlane/ngx-charts';
 import { Router } from '@angular/router';
@@ -15,26 +15,15 @@ import { Subscription } from 'rxjs';
   styleUrls: ['./home.component.scss'],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
+
 export class HomeComponent implements OnInit {
   private subscription: Subscription = new Subscription();
+  private loadingSubject = new BehaviorSubject<boolean>(true);
+  private errorSubject = new BehaviorSubject<string | null>(null);
 
-  public olympics$: Observable<any> = this.olympicService.getOlympics().pipe(
-    map((data) => {
-      return data
-        ? data.map((country: OlympicCountry) => {
-          return {
-            id: country.id,
-            name: country.country,
-            value: country.participations.reduce(
-              (total, participation) => total + participation.medalsCount,
-              0
-            ),
-            extra: { id: country.id }
-          };
-        })
-        : [];
-    })
-  );
+  public loading$ = this.loadingSubject.asObservable();
+  public error$ = this.errorSubject.asObservable();
+  public olympics$: Observable<any> | undefined;
 
   view: [number, number] = [700, 400];
   showLegend = true;
@@ -58,22 +47,49 @@ export class HomeComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.olympics$ = this.olympicService.getOlympics().pipe(
+      map((data) => {
+        return data
+          ? data.map((country: OlympicCountry) => {
+            return {
+              id: country.id,
+              name: country.country,
+              value: country.participations.reduce(
+                (total, participation) => total + participation.medalsCount,
+                0
+              ),
+              extra: { id: country.id }
+            };
+          })
+          : [];
+      }),
+      catchError((error) => {
+        this.errorSubject.next('Erreur lors du chargement des données');
+        return of([]);
+      }),
+      finalize(() => this.loadingSubject.next(false))
+    );
+
     this.subscription.add(
-      this.olympicService.loadInitialData().subscribe()
+      this.olympicService.loadInitialData().subscribe({
+        next: (data) => {
+          this.loadingSubject.next(false);
+        },
+        error: (error) => {
+          this.loadingSubject.next(false);
+        }
+      })
     );
   }
+
+
   onSelect(event: any): void {
-    console.log('event', event);
     const id = event.extra.id;
     if (id) {
       this.router.navigate(['/detail', id]);
     } else {
       console.error('ID is missing from the selected event');
     }
-  }
-  @HostListener('window:resize', ['$event'])
-  onResize(event: any): void {
-    this.setView();
   }
 
   setView(): void {
