@@ -1,7 +1,7 @@
-import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, throwError } from 'rxjs';
-import { catchError, filter, map, tap } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+import { catchError, filter, map } from 'rxjs/operators';
 import { OlympicCountry } from '../models/Olympic';
 
 @Injectable({
@@ -10,30 +10,25 @@ import { OlympicCountry } from '../models/Olympic';
 export class OlympicService {
   private olympicUrl = './assets/mock/olympic.json';
   private loading = new BehaviorSubject<boolean>(false);
-  private olympics$ = new BehaviorSubject<any>(undefined);
+  private olympics$ = new BehaviorSubject<OlympicCountry[] | null>(null);
 
   constructor(private http: HttpClient) { }
 
-  loadInitialData() {
-    this.loading.next(true);
-    console.log('Début du chargement des données olympiques');
+  loadInitialData(): Observable<any> {
+    this.loading.next(true); // Début du chargement
     return this.http.get<OlympicCountry[]>(this.olympicUrl).pipe(
-      tap((value) => {
-        console.log('Données reçues:', value);
-        this.olympics$.next(value);
-        this.loading.next(false);
-        console.log('Chargement terminé');
+      map((data) => {
+        this.olympics$.next(data);
+        this.loading.next(false); // Fin du chargement
+        return data;
       }),
       catchError((error) => {
-        console.error('Erreur lors du chargement des données:', error);
-        this.olympics$.next(null);
-        this.loading.next(false);
-        console.log('Chargement terminé avec erreur');
-        return throwError(() => new Error('Erreur lors du chargement des données'));
+        console.error('Error loading initial data', error);
+        this.loading.next(false); // Fin du chargement même en cas d'erreur
+        return of(null);
       })
     );
   }
-
   isLoading() {
     return this.loading.asObservable();
   }
@@ -42,33 +37,21 @@ export class OlympicService {
     return this.olympics$.value !== null && this.olympics$.value !== undefined;
   }
 
-
-
-  getOlympics() {
+  getOlympics(): Observable<OlympicCountry[] | null> {
     return this.olympics$.asObservable();
   }
 
   getOlympicCountry(id: string): Observable<OlympicCountry | null> {
-
     return this.getOlympics().pipe(
-
-      filter(olympics => olympics !== null && olympics !== undefined),
-
+      filter((olympics): olympics is OlympicCountry[] => olympics !== null && olympics !== undefined),
       map((olympics: OlympicCountry[]) => {
-
         const foundCountry = olympics.find((c: OlympicCountry) => c.id === +id);
-
         if (!foundCountry) {
-
           throw new Error('404 Not Found');
-
         }
-
         return foundCountry;
-
       })
-
     );
-
   }
 }
+

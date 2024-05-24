@@ -1,4 +1,13 @@
-<div class="chart-container">
+<div *ngIf="loading$ | async" class="loading-indicator">
+  Chargement des données...
+</div>
+
+<div *ngIf="error$ | async as error" class="error-message">
+  {{ error }}
+</div>
+
+<div *ngIf="!(loading$ | async) && !(error$ | async)">
+  <div class="chart-container">
     <ngx-charts-line-chart
       [view]="view"
       [scheme]="colorScheme"
@@ -15,4 +24,6 @@
   <div class="container">
     <app-button buttonText="Retour"></app-button>
   </div>
+</div>
+
 
