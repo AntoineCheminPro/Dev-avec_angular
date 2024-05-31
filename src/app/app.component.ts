@@ -14,7 +14,10 @@ import { RouterModule } from '@angular/router';
 export class AppComponent implements OnInit {
   constructor(private olympicService: OlympicService) { }
 
+  // l'utilisation de take(1) permet de ne pas s'abonner à l'observable, il n'est pas nécessaire de l'unsubscribe
   ngOnInit(): void {
     this.olympicService.loadInitialData().pipe(take(1)).subscribe();
   }
+
+  
 }

@@ -17,7 +17,7 @@
       [yAxis]="true"
       [autoScale]="false"
       [xAxisTickFormatting]="formatXAxisTick.bind(this)"
-      (select)="onSelect($event)">
+      >
     </ngx-charts-line-chart>
     <h2 class="title">{{ (country$ | async)?.[0]?.name }}</h2>
   </div>

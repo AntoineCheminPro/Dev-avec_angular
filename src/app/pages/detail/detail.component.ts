@@ -65,13 +65,12 @@ export class DetailComponent implements OnInit {
     );
   }
 
-  // Charger les données du pays
   loadCountryData(id: string) {
     this.loading$.next(true);
     this.error$.next(null);
 
     // Récupérer les données du pays
-    this.olympicService.getOlympicCountry(id).subscribe({
+    const sub = this.olympicService.getOlympicCountry(id).subscribe({
       // Gérer les données
       next: (country: OlympicCountry | null) => {
         if (country !== null) {
@@ -83,7 +82,6 @@ export class DetailComponent implements OnInit {
             }))
           }];
           this.country$.next(transformedData);
-        
         } else {
           console.error("Aucun pays trouvé avec l'ID spécifié.");
           this.error$.next("Aucun pays trouvé avec l'ID spécifié.");
@@ -100,12 +98,9 @@ export class DetailComponent implements OnInit {
         this.loading$.next(false);
       }
     });
+    this.subscription.add(sub);
+  }
 
-  }
-  // Naviguer vers la page de détail lors de la sélection d'un élément
-  onSelect(event: any): void {
-    console.log(event);
-  }
 
   // Nettoyer les abonnements lors de la destruction du composant
   ngOnDestroy() {

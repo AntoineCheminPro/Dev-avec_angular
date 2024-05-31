@@ -30,14 +30,6 @@ export class OlympicService {
       })
     );
   }
-  isLoading() {
-    return this.loading.asObservable();
-  }
-
-  // Vérifier si les données sont chargées
-  isDataLoaded(): boolean {
-    return this.olympics$.value !== null && this.olympics$.value !== undefined;
-  }
 
   // Récupérer les données des pays
   getOlympics(): Observable<OlympicCountry[] | null> {
