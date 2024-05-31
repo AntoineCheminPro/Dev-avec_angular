@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { catchError, filter, map } from 'rxjs/operators';
 import { OlympicCountry } from '../models/Olympic';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root',
@@ -12,9 +13,9 @@ export class OlympicService {
   private loading = new BehaviorSubject<boolean>(false);
   private olympics$ = new BehaviorSubject<OlympicCountry[] | null>(null);
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, private router: Router) { }
 
-  // Charger les données initiales
+  // Charger les données initiales et les stocker dans un BehaviorSubject
   loadInitialData(): Observable<any> {
     this.loading.next(true); // Début du chargement
     return this.http.get<OlympicCountry[]>(this.olympicUrl).pipe(
@@ -26,7 +27,9 @@ export class OlympicService {
       catchError((error) => {
         console.error('Error loading initial data', error);
         this.loading.next(false); // Fin du chargement même en cas d'erreur
+        this.router.navigate(['/404'])
         return of(null);
+
       })
     );
   }

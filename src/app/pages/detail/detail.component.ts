@@ -85,6 +85,7 @@ export class DetailComponent implements OnInit {
         } else {
           console.error("Aucun pays trouvé avec l'ID spécifié.");
           this.error$.next("Aucun pays trouvé avec l'ID spécifié.");
+          this.router.navigate(['/404'])
         }
         this.loading$.next(false);
       },
@@ -93,6 +94,7 @@ export class DetailComponent implements OnInit {
         console.error("Erreur lors de la récupération des données du pays:", error);
         this.error$.next("Une erreur est survenue lors de la récupération des données.");
         this.loading$.next(false);
+        this.router.navigate(['/404'])
       },
       complete: () => {
         this.loading$.next(false);
