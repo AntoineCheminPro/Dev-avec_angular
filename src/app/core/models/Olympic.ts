@@ -5,3 +5,4 @@ export interface OlympicCountry {
     country: string;
     participations: Participation[];
 }
+
