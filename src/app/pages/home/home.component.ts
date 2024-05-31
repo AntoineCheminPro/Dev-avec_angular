@@ -70,6 +70,7 @@ export class HomeComponent implements OnInit {
       catchError((error) => {
         this.errorSubject.next('Erreur lors du chargement des données');
         return of([]);
+        this.router.navigate(['/404'])
       }),
       finalize(() => this.loadingSubject.next(false))
     );
